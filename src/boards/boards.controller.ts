@@ -7,10 +7,10 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { BoardStatus } from './board-status.enum';
+//import { BoardStatus } from './board-status.enum';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { BoardStatusValidationPipe } from './pipes/board-status-validation.pipe';
+//import { BoardStatusValidationPipe } from './pipes/board-status-validation.pipe';
 import { Board } from './board.entity';
 
 @Controller('boards')
@@ -27,7 +27,7 @@ export class BoardsController {
   @UsePipes(ValidationPipe) //핸들러 레벨파이프,통과되면 아래 핸들러를 실행
   //인자는 @Body에서 받아서 나온 CreateBoardDto타입의 인자 CreateBoardDto변수를 받는다
   createBoard(@Body() CreateBoardDto: CreateBoardDto): Promise<Board> {
-    return this.boardsService.creadteBoard(CreateBoardDto);
+    return this.boardsService.createBoard(CreateBoardDto);
   }
   /*
   //get요청을 받으면 모든 게시물을 가져오도록 했다

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { BoardStatus } from './board-status.enum';
-import { v1 as uuid } from 'uuid';
+//import { v1 as uuid } from 'uuid';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { BoardRepository } from './board.repositiory';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,7 +16,8 @@ export class BoardsService {
   //id에 맞는 게시물을 찾기
   async getBoardById(id: number): Promise<Board> {
     //영상에서는 findOne메소드를 쓰라고 했지만 ORM의 버전차이떄문에 이제부터 findOneBy메소드를 써야한다
-    const found = await this.boardRepository.findOneBy({ id });
+    //추가)0.2로 다운그레이드 했읍니다
+    const found = await this.boardRepository.findOne(id);
 
     if (!found) {
       throw new NotFoundException(`응 아니야 응 아니아니야 ${id}따윈 없는거야`);
@@ -25,7 +26,7 @@ export class BoardsService {
   }
 
   //게시물을 생성
-  async creadteBoard(createBoardDto: CreateBoardDto): Promise<Board> {
+  async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
     const { title, description } = createBoardDto;
 
     //새로운 게시물을 생성, 이전과 달리 ORM에서 알아서 번호를 주기 떄문에 uuid가 필요없음

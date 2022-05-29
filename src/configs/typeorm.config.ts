@@ -8,6 +8,6 @@ export const typeORMConfig: TypeOrmModuleOptions = {
   username: 'postgres',
   password: 'postgres',
   database: 'board-app',
-  entities: [__dirname + '/../**/*.entity.{js.ts}'],
+  entities: ['/Users/mac/Documents/trans/aaa/src/board.entity.ts'],
   synchronize: true,
 };
