@@ -1,9 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  ParseIntPipe,
+  Patch,
   Post,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -12,23 +16,76 @@ import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 //import { BoardStatusValidationPipe } from './pipes/board-status-validation.pipe';
 import { Board } from './board.entity';
+import { DeleteResult } from 'typeorm';
+import { BoardStatusValidationPipe } from './pipes/board-status-validation.pipe';
+import { BoardStatus } from './board-status.enum';
+import { AuthGuard } from '@nestjs/passport';
+import { User } from 'src/auth/auth.entity';
+import { GetUser } from 'src/auth/get-user.decorator';
 
 @Controller('boards')
+@UseGuards(AuthGuard())
 export class BoardsController {
   constructor(private boardsService: BoardsService) {}
   //해당 컨트롤러에 service의존성을 주입하게 된다
 
+  //가져오는거
   @Get('/:id')
   getBoardById(@Param('id') id: number): Promise<Board> {
     return this.boardsService.getBoardById(id);
   }
 
+  //새로 만드는거
   @Post()
   @UsePipes(ValidationPipe) //핸들러 레벨파이프,통과되면 아래 핸들러를 실행
   //인자는 @Body에서 받아서 나온 CreateBoardDto타입의 인자 CreateBoardDto변수를 받는다
-  createBoard(@Body() CreateBoardDto: CreateBoardDto): Promise<Board> {
-    return this.boardsService.createBoard(CreateBoardDto);
+  //@GetUser는 Auth에서 만든 커스텀 데코레이토로써, 게시물을 만들떄 유저에 대한 정보도 추가를 할 것임
+  createBoard(
+    @Body() CreateBoardDto: CreateBoardDto,
+    @GetUser() user: User,
+  ): Promise<Board> {
+    console.log('test');
+    return this.boardsService.createBoard(CreateBoardDto, user);
   }
+
+  //지우는거
+  @Delete('/:id')
+  deleteBoard(
+    @Param('id', ParseIntPipe) id,
+    @GetUser() user: User,
+  ): Promise<void> {
+    return this.boardsService.deleteBoard(id, user);
+  }
+
+  //갱신하는거
+  @Patch('/:id/status')
+  updateBoardStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('status', BoardStatusValidationPipe) status: BoardStatus,
+  ): Promise<Board> {
+    return this.boardsService.updateBoardStatus(id, status);
+  }
+
+  //다보여주는거
+  //@Get()
+  //getAllBoard(): Promise<Board[]> {
+  //  return this.boardsService.getAllBoards();
+  //}
+
+  //일부 유저만 보여주는거
+  //Get뒤에 특정한 놈들만 오는줄 몰랐지...
+  //@Get('/us')
+  //getAllBoardsUser(@GetUser() user: User): Promise<Board[]> {
+  //  return this.boardsService.getAllBoardsUser(user);
+  //}
+
+  //일부 유저만 보여주는거
+  @Get()
+  getAllBoards(@GetUser() user: User): Promise<Board[]> {
+    console.log('asd');
+    return this.boardsService.getAllBoards(user);
+  }
+
   /*
   //get요청을 받으면 모든 게시물을 가져오도록 했다
   @Get()

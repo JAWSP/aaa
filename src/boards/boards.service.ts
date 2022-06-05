@@ -5,10 +5,12 @@ import { CreateBoardDto } from './dto/create-board.dto';
 import { BoardRepository } from './board.repositiory';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Board } from './board.entity';
+import { User } from 'src/auth/auth.entity';
 
 @Injectable()
 export class BoardsService {
   constructor(
+    //서비스에서 리포지토리를 주입시킨다
     @InjectRepository(BoardRepository)
     private boardRepository: BoardRepository,
   ) {}
@@ -26,21 +28,62 @@ export class BoardsService {
   }
 
   //게시물을 생성
-  async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
-    const { title, description } = createBoardDto;
+  //근데 리포지토리가 생겼으니, DB를 다루는 메소드라면 리포지토리로 넘어가게 만들어준다
+  createBoard(createBoardDto: CreateBoardDto, user: User): Promise<Board> {
+    return this.boardRepository.createBoard(createBoardDto, user);
+  }
 
-    //새로운 게시물을 생성, 이전과 달리 ORM에서 알아서 번호를 주기 떄문에 uuid가 필요없음
-    const board = this.boardRepository.create({
-      title,
-      description,
-      status: BoardStatus.PUBLIC,
-    });
+  //게시물을 삭제
+  //remove는 db에 2번접근하기 떄문에 delete를 쓴다
 
-    //await로 하는 이유는 이게 비동기로 동작이 이루어지기 때문에 충분히 결과를 받고 난 뒤 리턴할려고
+  async deleteBoard(id: number, user: User): Promise<void> {
+    //삭제를 해서
+    const result = await this.boardRepository.delete({ id, user });
+    //그래고 찾은 값이 없다면(영향을 받은 값이 없다면) result객체안의 affected는 0이 나옴
+    if (result.affected === 0) {
+      throw new NotFoundException(`네가 찾은 ${id}, 그 id를 찾을 수 없는뎁쇼`);
+    }
+    //삭제가 잘되었는지 확인
+    console.log('result', result);
+  }
+
+  //게시물을 갱신
+
+  async updateBoardStatus(id: number, status: BoardStatus): Promise<Board> {
+    //async를 쓰기 떄문에 await를 쓰이게 된다
+    const board = await this.getBoardById(id);
+
+    board.status = status;
     await this.boardRepository.save(board);
 
     return board;
   }
+
+  //모든 게시물을 가져오기
+  //find메소드를 이용하여 가져오는데, 특정 옵션을 안넣으면 해당 테이블의 정보를 다 가져온다
+  //모든 얘들을 가져오는거니 리턴 타입은board[]를 쓴다
+
+  async getAllBoards(user: User): Promise<Board[]> {
+    const query = this.boardRepository.createQueryBuilder('board');
+
+    query.where('board.userId = :userId', { userId: user.id });
+    // query.where('board.userId = :userid', { userId: user.id });
+    const boards = await query.getMany();
+    //여기서 문제가
+
+    return boards;
+  }
+
+  /*
+  async getAllBoardsUser(user: User): Promise<Board[]> {
+    const query = this.boardRepository.createQueryBuilder('board');
+
+    query.where('board.userId = :userid', { userId: user.id });
+
+    const boards = await query.getMany();
+    return boards;
+  }
+  /*
 
   /*
   //모든 데이터를 뿌리기
@@ -49,7 +92,7 @@ export class BoardsService {
   getAllBoards(): Board[] {
     return this.boards;
   }
-
+ 
   //id를 기준으로 특정 게시물을 찾기
   getBoardById(id: string): Board {
     const found = this.boards.find((board) => board.id === id);
