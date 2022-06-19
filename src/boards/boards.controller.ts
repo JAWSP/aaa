@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   ParseIntPipe,
   Patch,
@@ -26,6 +27,8 @@ import { GetUser } from 'src/auth/get-user.decorator';
 @Controller('boards')
 @UseGuards(AuthGuard())
 export class BoardsController {
+  //해당 컨트롤러에 로그 객체를 만들어줌
+  private logger = new Logger('BoardsController');
   constructor(private boardsService: BoardsService) {}
   //해당 컨트롤러에 service의존성을 주입하게 된다
 
@@ -41,11 +44,15 @@ export class BoardsController {
   //인자는 @Body에서 받아서 나온 CreateBoardDto타입의 인자 CreateBoardDto변수를 받는다
   //@GetUser는 Auth에서 만든 커스텀 데코레이토로써, 게시물을 만들떄 유저에 대한 정보도 추가를 할 것임
   createBoard(
-    @Body() CreateBoardDto: CreateBoardDto,
+    @Body() createBoardDto: CreateBoardDto,
     @GetUser() user: User,
   ): Promise<Board> {
-    console.log('test');
-    return this.boardsService.createBoard(CreateBoardDto, user);
+    this.logger.verbose(
+      `User ${user.username} creating a new board. Payload: ${JSON.stringify(
+        createBoardDto,
+      )}`,
+    );
+    return this.boardsService.createBoard(createBoardDto, user);
   }
 
   //지우는거
@@ -82,7 +89,8 @@ export class BoardsController {
   //일부 유저만 보여주는거
   @Get()
   getAllBoards(@GetUser() user: User): Promise<Board[]> {
-    console.log('asd');
+    //add log
+    this.logger.verbose(`User ${user.username} trying to get all boards`);
     return this.boardsService.getAllBoards(user);
   }
 

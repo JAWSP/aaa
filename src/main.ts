@@ -1,9 +1,18 @@
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import * as config from 'config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(3000);
+
+  const serverConfig = config.get('server');
+  const port = serverConfig.port;
+
+  //const port = 3000;
+  await app.listen(port);
+  //여기서 로그를 남겨주는데, nestjsd에서는 로거 클래스(?)가 내장탑제(빌트인)되었다고함
+  Logger.log(`Application running on port ${port}`);
 }
 bootstrap();
 //어플리케이션을 생성하고
